@@ -1,4 +1,4 @@
-import { funEmoji } from '@dicebear/collection';
+import { bottts } from '@dicebear/collection';
 import { createAvatar } from '@dicebear/core';
 import { UnstyledButton } from '@mantine/core';
 import { useMemo } from 'react';
@@ -10,9 +10,17 @@ interface Props {
   ariaLabel?: string;
 }
 
+const BG_COLORS = ['ff6cc4', 'ffd866', '66d9e8', '69db7c', 'ffa94d', 'b197fc', 'ff8aa0'];
+
 export function Avatar({ seed, size = 56, onClick, ariaLabel }: Props) {
   const dataUri = useMemo(
-    () => createAvatar(funEmoji, { seed, radius: 50, backgroundType: ['gradientLinear', 'solid'] }).toDataUri(),
+    () =>
+      createAvatar(bottts, {
+        seed,
+        radius: 50,
+        backgroundColor: BG_COLORS,
+        backgroundType: ['solid', 'gradientLinear']
+      }).toDataUri(),
     [seed]
   );
 

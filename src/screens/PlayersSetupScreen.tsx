@@ -1,11 +1,13 @@
-import { Collapse, Group, NumberInput, Stack, Switch, Text, Title } from '@mantine/core';
+import { Collapse, Group, Stack, Switch, Text, Title } from '@mantine/core';
 import {
   IconArrowLeft,
   IconChevronDown,
   IconChevronUp,
   IconDice5,
+  IconMinus,
   IconPlayerPlayFilled,
   IconPlus,
+  IconRefresh,
   IconTrash
 } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -113,21 +115,53 @@ export function PlayersSetupScreen({ state, dispatch }: Props) {
             <Text fw={700} c="white" size="lg">Imposters</Text>
             <Text size="xs" c="white" style={{ opacity: 0.7 }}>How many sneaky ones?</Text>
           </Stack>
-          <NumberInput
-            value={state.imposterCount}
-            onChange={(v) =>
-              dispatch({
-                type: 'SET_IMPOSTER_COUNT',
-                count: Math.max(1, Math.min(maxImposters, Number(v) || 1))
-              })
-            }
-            min={1}
-            max={maxImposters}
-            w={90}
-            size="md"
-            radius="xl"
-            styles={{ input: { fontWeight: 700, textAlign: 'center', fontSize: 18 } }}
-          />
+          <Group gap="xs" align="center" wrap="nowrap">
+            <CandyIconButton
+              color="violet"
+              onClick={() =>
+                dispatch({
+                  type: 'SET_IMPOSTER_COUNT',
+                  count: Math.max(1, state.imposterCount - 1)
+                })
+              }
+              disabled={state.imposterCount <= 1}
+              ariaLabel="decrease imposters"
+            >
+              <IconMinus size={20} />
+            </CandyIconButton>
+            <div
+              style={{
+                minWidth: 56,
+                height: 48,
+                padding: '0 14px',
+                borderRadius: 14,
+                background: 'linear-gradient(180deg, #2d1b6b, #1f1454)',
+                border: '3px solid #6741d9',
+                color: 'white',
+                fontWeight: 800,
+                fontSize: 24,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: 'inset 0 4px 8px rgba(0,0,0,0.4)'
+              }}
+            >
+              {state.imposterCount}
+            </div>
+            <CandyIconButton
+              color="violet"
+              onClick={() =>
+                dispatch({
+                  type: 'SET_IMPOSTER_COUNT',
+                  count: Math.min(maxImposters, state.imposterCount + 1)
+                })
+              }
+              disabled={state.imposterCount >= maxImposters}
+              ariaLabel="increase imposters"
+            >
+              <IconPlus size={20} />
+            </CandyIconButton>
+          </Group>
         </Group>
       </div>
 
@@ -180,6 +214,15 @@ export function PlayersSetupScreen({ state, dispatch }: Props) {
                 disabled={!state.customOverride.enabled}
                 style={{ fontSize: 16, padding: '12px 16px' }}
               />
+              <CandyButton
+                color="yellow"
+                size="sm"
+                icon={<IconRefresh size={16} />}
+                onClick={() => dispatch({ type: 'RANDOMIZE_CUSTOM_WORD' })}
+                disabled={!state.customOverride.enabled}
+              >
+                Surprise me
+              </CandyButton>
             </Stack>
           </Collapse>
         </Stack>

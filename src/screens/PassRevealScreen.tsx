@@ -92,7 +92,7 @@ export function PassRevealScreen({ state, dispatch }: Props) {
             minHeight={360}
           >
             {player.isImposter ? (
-              <Stack gap="xs" align="center" className="villain-content">
+              <Stack gap="xs" align="center">
                 <div className="villain-mask">
                   <VillainMask size={64} />
                 </div>

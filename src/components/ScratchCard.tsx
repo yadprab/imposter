@@ -12,11 +12,12 @@ interface Props {
   minHeight?: number;
 }
 
-const REVEAL_PIXEL_THRESHOLD = 0.15;
-const REVEAL_AREA_THRESHOLD = 0.28;
-const REVEAL_LIFT_THRESHOLD = 0.06;
+const REVEAL_PIXEL_THRESHOLD = 0.18;
+const REVEAL_AREA_THRESHOLD = 0.3;
+const REVEAL_LIFT_THRESHOLD = 0.12;
 const BRUSH_RADIUS = 38;
 const BRUSH_WIDTH = 76;
+const INPUT_GRACE_MS = 280;
 
 export function ScratchCard({
   onReveal,
@@ -36,10 +37,12 @@ export function ScratchCard({
   const scratchedArea = useRef(0);
   const totalArea = useRef(1);
   const lastCheck = useRef(0);
+  const isInitialized = useRef(false);
+  const mountedAt = useRef(0);
   const [fading, setFading] = useState(false);
   const [interacted, setInteracted] = useState(false);
 
-  useEffect(() => {
+  function paint() {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
@@ -47,14 +50,16 @@ export function ScratchCard({
     if (!ctx) return;
 
     const rect = container.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+
     const dpr = window.devicePixelRatio || 1;
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     canvas.style.width = rect.width + 'px';
     canvas.style.height = rect.height + 'px';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.scale(dpr, dpr);
     totalArea.current = rect.width * rect.height;
-    scratchedArea.current = 0;
 
     const grad = ctx.createLinearGradient(0, 0, rect.width, rect.height);
     grad.addColorStop(0, surfaceFrom);
@@ -98,7 +103,32 @@ export function ScratchCard({
     ctx.lineTo(cx - 22, cy);
     ctx.lineTo(cx - 14, cy + 8);
     ctx.stroke();
+  }
+
+  useEffect(() => {
+    scratchedArea.current = 0;
+    revealed.current = false;
+    isDrawing.current = false;
+    lastPoint.current = null;
+    isInitialized.current = false;
+    mountedAt.current = Date.now();
+
+    paint();
+    isInitialized.current = true;
+
+    const container = containerRef.current;
+    if (!container || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+      if (!revealed.current && scratchedArea.current === 0) paint();
+    });
+    ro.observe(container);
+    return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hint, hintColor, surfaceFrom, surfaceTo]);
+
+  function inGracePeriod() {
+    return Date.now() - mountedAt.current < INPUT_GRACE_MS;
+  }
 
   function getPos(e: React.PointerEvent) {
     const canvas = canvasRef.current!;
@@ -108,6 +138,7 @@ export function ScratchCard({
 
   function triggerReveal() {
     if (revealed.current) return;
+    if (!isInitialized.current) return;
     revealed.current = true;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
@@ -145,6 +176,7 @@ export function ScratchCard({
 
   function checkPixelReveal() {
     if (revealed.current) return false;
+    if (!isInitialized.current) return false;
     if (totalArea.current <= 1) return false;
     if (scratchedArea.current <= 0) return false;
     const canvas = canvasRef.current;
@@ -165,6 +197,7 @@ export function ScratchCard({
 
   function maybeReveal(force: boolean) {
     if (revealed.current) return;
+    if (!isInitialized.current) return;
     if (scratchedArea.current / totalArea.current > REVEAL_AREA_THRESHOLD) {
       triggerReveal();
       return;
@@ -177,6 +210,8 @@ export function ScratchCard({
 
   function handleDown(e: React.PointerEvent) {
     if (revealed.current) return;
+    if (!isInitialized.current) return;
+    if (inGracePeriod()) return;
     isDrawing.current = true;
     setInteracted(true);
     (e.target as Element).setPointerCapture?.(e.pointerId);
@@ -232,6 +267,7 @@ export function ScratchCard({
           style={{
             position: 'absolute',
             inset: 0,
+            zIndex: 2,
             touchAction: 'none',
             cursor: 'grab',
             opacity: fading ? 0 : 1,

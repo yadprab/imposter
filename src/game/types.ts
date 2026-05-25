@@ -38,5 +38,6 @@ export interface GameState {
   imposterCount: number;
   customOverride: CustomOverride;
   lastImposterIds: number[];
+  removedByHostFilter: { name: string; seed: string } | null;
   round: Round | null;
 }

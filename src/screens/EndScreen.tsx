@@ -1,4 +1,4 @@
-import { Group, SimpleGrid, Stack, Text, Title } from '@mantine/core';
+import { Group, Stack, Text, Title } from '@mantine/core';
 import { IconHome, IconRefresh } from '@tabler/icons-react';
 import { Avatar } from '../components/Avatar';
 import { CandyButton } from '../components/CandyButton';
@@ -56,14 +56,7 @@ export function EndScreen({ state, dispatch }: Props) {
 
       <div style={{ flex: 1 }} />
 
-      <SimpleGrid cols={2} spacing="sm">
-        <CandyButton
-          color="violet"
-          onClick={() => dispatch({ type: 'RESET' })}
-          icon={<IconHome size={20} />}
-        >
-          New game
-        </CandyButton>
+      <Stack gap="sm">
         <CandyButton
           color="green"
           onClick={() => dispatch({ type: 'NEW_ROUND_SAME_PLAYERS' })}
@@ -71,7 +64,14 @@ export function EndScreen({ state, dispatch }: Props) {
         >
           Next round
         </CandyButton>
-      </SimpleGrid>
+        <CandyButton
+          color="violet"
+          onClick={() => dispatch({ type: 'RESET' })}
+          icon={<IconHome size={20} />}
+        >
+          New game
+        </CandyButton>
+      </Stack>
     </Stack>
   );
 }

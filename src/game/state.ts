@@ -16,17 +16,22 @@ const DEFAULT_PLAYERS = [
   'Swetha'
 ];
 
-export const initialState: GameState = {
-  phase: 'splash',
-  hostName: '',
-  hostSeed: randomSeed(),
-  playerNames: DEFAULT_PLAYERS,
-  playerSeeds: DEFAULT_PLAYERS.map(() => randomSeed()),
-  imposterCount: 1,
-  customOverride: { enabled: true, category: '', word: '' },
-  lastImposterIds: [],
-  round: null
-};
+function makeInitialState(): GameState {
+  return {
+    phase: 'splash',
+    hostName: '',
+    hostSeed: randomSeed(),
+    playerNames: [...DEFAULT_PLAYERS],
+    playerSeeds: DEFAULT_PLAYERS.map(() => randomSeed()),
+    imposterCount: 1,
+    customOverride: { enabled: true, category: '', word: '' },
+    lastImposterIds: [],
+    removedByHostFilter: null,
+    round: null
+  };
+}
+
+export const initialState: GameState = makeInitialState();
 
 export type Action =
   | { type: 'LEAVE_SPLASH' }
@@ -42,6 +47,7 @@ export type Action =
   | { type: 'TOGGLE_CUSTOM_OVERRIDE' }
   | { type: 'SET_CUSTOM_CATEGORY'; category: string }
   | { type: 'SET_CUSTOM_WORD'; word: string }
+  | { type: 'RANDOMIZE_CUSTOM_WORD' }
   | { type: 'START_ROUND' }
   | { type: 'MARK_HOST_BRIEFED' }
   | { type: 'BEGIN_HANDOFF' }
@@ -112,23 +118,44 @@ export function reducer(state: GameState, action: Action): GameState {
       return { ...state, hostSeed: randomSeed() };
     case 'CONTINUE_TO_PLAYERS': {
       const host = state.hostName.trim().toLowerCase();
-      const keptIdx = state.playerNames
-        .map((n, i) => ({ n, i }))
-        .filter(({ n }) => n.trim().toLowerCase() !== host)
-        .map(({ i }) => i);
-      const names = keptIdx.map((i) => state.playerNames[i]);
-      const seeds = keptIdx.map((i) => state.playerSeeds[i]);
+      const matchIdx = state.playerNames.findIndex(
+        (n) => n.trim().toLowerCase() === host && host.length > 0
+      );
+      if (matchIdx < 0) {
+        return { ...state, phase: 'players-setup', removedByHostFilter: null };
+      }
+      const names = state.playerNames.filter((_, i) => i !== matchIdx);
+      const seeds = state.playerSeeds.filter((_, i) => i !== matchIdx);
+      if (names.length < 2) {
+        return { ...state, phase: 'players-setup', removedByHostFilter: null };
+      }
       const maxImp = Math.max(1, Math.floor((names.length - 1) / 2));
       return {
         ...state,
         phase: 'players-setup',
-        playerNames: names.length >= 2 ? names : state.playerNames,
-        playerSeeds: names.length >= 2 ? seeds : state.playerSeeds,
-        imposterCount: Math.min(state.imposterCount, maxImp)
+        playerNames: names,
+        playerSeeds: seeds,
+        imposterCount: Math.min(state.imposterCount, maxImp),
+        removedByHostFilter: {
+          name: state.playerNames[matchIdx],
+          seed: state.playerSeeds[matchIdx]
+        },
+        lastImposterIds: []
       };
     }
-    case 'BACK_TO_HOST':
+    case 'BACK_TO_HOST': {
+      if (state.removedByHostFilter) {
+        return {
+          ...state,
+          phase: 'host-setup',
+          playerNames: [...state.playerNames, state.removedByHostFilter.name],
+          playerSeeds: [...state.playerSeeds, state.removedByHostFilter.seed],
+          removedByHostFilter: null,
+          lastImposterIds: []
+        };
+      }
       return { ...state, phase: 'host-setup' };
+    }
     case 'SET_PLAYER_NAME': {
       const names = [...state.playerNames];
       names[action.index] = action.name;
@@ -143,6 +170,7 @@ export function reducer(state: GameState, action: Action): GameState {
       };
     case 'REMOVE_PLAYER': {
       if (state.playerNames.length <= 2) return state;
+      if (action.index < 0 || action.index >= state.playerNames.length) return state;
       const names = state.playerNames.filter((_, i) => i !== action.index);
       const seeds = state.playerSeeds.filter((_, i) => i !== action.index);
       const maxImp = Math.max(1, Math.floor((names.length - 1) / 2));
@@ -150,7 +178,8 @@ export function reducer(state: GameState, action: Action): GameState {
         ...state,
         playerNames: names,
         playerSeeds: seeds,
-        imposterCount: Math.min(state.imposterCount, maxImp)
+        imposterCount: Math.min(state.imposterCount, maxImp),
+        lastImposterIds: []
       };
     }
     case 'REROLL_AVATAR': {
@@ -175,6 +204,17 @@ export function reducer(state: GameState, action: Action): GameState {
         ...state,
         customOverride: { ...state.customOverride, word: action.word }
       };
+    case 'RANDOMIZE_CUSTOM_WORD': {
+      const picked = pickRandomWord();
+      return {
+        ...state,
+        customOverride: {
+          enabled: true,
+          category: picked.category,
+          word: picked.word
+        }
+      };
+    }
     case 'START_ROUND': {
       const round = buildRound(
         state.playerNames,
@@ -183,11 +223,18 @@ export function reducer(state: GameState, action: Action): GameState {
         state.customOverride,
         state.lastImposterIds
       );
+      const consumed =
+        state.customOverride.enabled &&
+        state.customOverride.word.trim().length > 0 &&
+        state.customOverride.category.trim().length > 0;
       return {
         ...state,
         phase: 'briefing',
         round,
-        lastImposterIds: round.players.filter((p) => p.isImposter).map((p) => p.id)
+        lastImposterIds: round.players.filter((p) => p.isImposter).map((p) => p.id),
+        customOverride: consumed
+          ? { ...state.customOverride, word: '', category: '' }
+          : state.customOverride
       };
     }
     case 'MARK_HOST_BRIEFED':
@@ -219,16 +266,23 @@ export function reducer(state: GameState, action: Action): GameState {
         state.customOverride,
         state.lastImposterIds
       );
+      const consumed =
+        state.customOverride.enabled &&
+        state.customOverride.word.trim().length > 0 &&
+        state.customOverride.category.trim().length > 0;
       return {
         ...state,
         phase: 'briefing',
         round,
-        lastImposterIds: round.players.filter((p) => p.isImposter).map((p) => p.id)
+        lastImposterIds: round.players.filter((p) => p.isImposter).map((p) => p.id),
+        customOverride: consumed
+          ? { ...state.customOverride, word: '', category: '' }
+          : state.customOverride
       };
     }
     case 'BACK_TO_PLAYERS':
       return { ...state, phase: 'players-setup', round: null };
     case 'RESET':
-      return initialState;
+      return makeInitialState();
   }
 }
