@@ -37,5 +37,6 @@ export interface GameState {
   playerSeeds: string[];
   imposterCount: number;
   customOverride: CustomOverride;
+  lastImposterIds: number[];
   round: Round | null;
 }

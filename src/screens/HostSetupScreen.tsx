@@ -1,7 +1,8 @@
 import { Stack, Text, Title } from '@mantine/core';
-import { IconArrowRight } from '@tabler/icons-react';
+import { IconArrowRight, IconDice5 } from '@tabler/icons-react';
 import { Avatar } from '../components/Avatar';
 import { CandyButton } from '../components/CandyButton';
+import { Sparkle, StarShape } from '../components/icons';
 import type { Action } from '../game/state';
 import type { GameState } from '../game/types';
 
@@ -23,14 +24,17 @@ export function HostSetupScreen({ state, dispatch }: Props) {
         <Text size="sm" mt={2} ta="center" maw={300} c="white" style={{ opacity: 0.85, lineHeight: 1.4 }}>
           One of you is lying.<br />Catch them.
         </Text>
-        <span className="star-deco" style={{ top: -2, left: 10, fontSize: 22 }}>✦</span>
-        <span className="star-deco" style={{ top: 36, right: 6, fontSize: 18, animationDelay: '0.5s' }}>★</span>
-        <span className="star-deco" style={{ top: 12, right: 38, fontSize: 14, animationDelay: '1.1s' }}>✦</span>
-        <span className="star-deco" style={{ top: 80, left: 26, fontSize: 16, animationDelay: '1.6s' }}>★</span>
+        <span className="star-deco" style={{ top: -2, left: 10 }}><Sparkle size={22} color="#ffd866" /></span>
+        <span className="star-deco" style={{ top: 36, right: 6, animationDelay: '0.5s' }}><StarShape size={18} color="#ff6cc4" /></span>
+        <span className="star-deco" style={{ top: 12, right: 38, animationDelay: '1.1s' }}><Sparkle size={14} color="#ffffff" /></span>
+        <span className="star-deco" style={{ top: 80, left: 26, animationDelay: '1.6s' }}><StarShape size={16} color="#ffd866" /></span>
       </Stack>
 
       <Stack gap="md" align="center">
-        <div className="speech-bubble">tap me to swap 🎲</div>
+        <div className="speech-bubble" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span>tap me to swap</span>
+          <IconDice5 size={16} stroke={2.5} />
+        </div>
         <div className="spotlight">
           <div className="hero-avatar-ring">
             <Avatar

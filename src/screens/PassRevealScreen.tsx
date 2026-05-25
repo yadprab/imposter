@@ -1,8 +1,10 @@
-import { Group, Stack, Text, Title, UnstyledButton } from '@mantine/core';
-import { IconArrowRight, IconHandStop, IconUserOff } from '@tabler/icons-react';
+import { Group, Stack, Text, Title } from '@mantine/core';
+import { IconArrowRight, IconUserOff } from '@tabler/icons-react';
 import { useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { CandyButton } from '../components/CandyButton';
+import { VillainMask } from '../components/icons';
+import { ScratchCard } from '../components/ScratchCard';
 import type { Action } from '../game/state';
 import type { GameState } from '../game/types';
 
@@ -15,22 +17,20 @@ type Stage = 'pass' | 'reveal';
 
 export function PassRevealScreen({ state, dispatch }: Props) {
   const [stage, setStage] = useState<Stage>('pass');
-  const [pressed, setPressed] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
   if (!state.round) return null;
   const round = state.round;
   const player = round.players[round.currentRevealIndex];
   const isLast = round.currentRevealIndex === round.players.length - 1;
+  const nextPlayer = !isLast ? round.players[round.currentRevealIndex + 1] : null;
   const progress = ((round.currentRevealIndex + (stage === 'reveal' ? 0.5 : 0)) / round.players.length) * 100;
 
-  function startHold() {
-    setPressed(true);
+  function onReveal() {
+    setRevealed(true);
     if (!player.hasSeenWord) {
       dispatch({ type: 'MARK_REVEALED', playerId: player.id });
     }
-  }
-  function endHold() {
-    setPressed(false);
   }
   function next() {
     if (isLast) {
@@ -38,7 +38,7 @@ export function PassRevealScreen({ state, dispatch }: Props) {
     } else {
       dispatch({ type: 'ADVANCE_REVEAL' });
       setStage('pass');
-      setPressed(false);
+      setRevealed(false);
     }
   }
 
@@ -60,17 +60,19 @@ export function PassRevealScreen({ state, dispatch }: Props) {
         <Stack gap="lg" align="center" justify="center" style={{ flex: 1 }}>
           <div className="ribbon">Pass to</div>
           <div className="hero-avatar-ring">
-            <Avatar seed={player.seed} size={160} />
+            <Avatar seed={player.seed} size={150} />
           </div>
-          <Title order={1} className="wordmark" style={{ fontSize: 52 }} ta="center">
+          <Title order={1} className="wordmark" style={{ fontSize: 'clamp(36px, 12vw, 52px)' }} ta="center">
             {player.name.toUpperCase()}
           </Title>
           <Text c="white" size="xs" ta="center" maw={300} style={{ opacity: 0.75 }}>
             Make sure no one else can see the screen
           </Text>
-          <CandyButton color="pink" onClick={() => setStage('reveal')}>
-            I'm {player.name}
-          </CandyButton>
+          <div className="cta-bounce">
+            <CandyButton color="pink" onClick={() => setStage('reveal')}>
+              I'm {player.name}
+            </CandyButton>
+          </div>
         </Stack>
       ) : (
         <Stack gap="md" align="center" style={{ flex: 1 }}>
@@ -79,83 +81,66 @@ export function PassRevealScreen({ state, dispatch }: Props) {
             <span>{player.name}</span>
           </span>
 
-          <UnstyledButton
-            onPointerDown={startHold}
-            onPointerUp={endHold}
-            onPointerLeave={endHold}
-            onPointerCancel={endHold}
-            onContextMenu={(e) => e.preventDefault()}
-            style={{ width: '100%', flex: 1, display: 'flex' }}
+          <ScratchCard
+            key={player.id}
+            cardClassName={player.isImposter ? 'imposter-villain' : 'crew-card'}
+            hint={player.isImposter ? 'SCRATCH IF YOU DARE' : 'SCRATCH TO REVEAL'}
+            surfaceFrom={player.isImposter ? '#3a0612' : '#8957e5'}
+            surfaceTo={player.isImposter ? '#1a0207' : '#3a1a8a'}
+            hintColor={player.isImposter ? '#ff4d6d' : '#ffd866'}
+            onReveal={onReveal}
+            minHeight={360}
           >
-            <div
-              className={pressed ? (player.isImposter ? 'imposter-card' : 'crew-card') : 'hold-card'}
-              style={{
-                flex: 1,
-                minHeight: 360,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%',
-                padding: 24
-              }}
-            >
-              {pressed ? (
-                player.isImposter ? (
-                  <Stack gap="sm" align="center">
-                    <span className="candy-chip candy-chip--yellow">
-                      <IconUserOff size={16} />
-                      <span>YOU ARE THE IMPOSTER</span>
-                    </span>
-                    <Text size="xs" tt="uppercase" fw={800} mt="sm"
-                      style={{ letterSpacing: '0.2em', color: 'rgba(255,255,255,0.85)' }}
-                    >
-                      You only know the category
-                    </Text>
-                    <Title order={2} style={{ color: 'white' }} ta="center">
-                      {round.category}
-                    </Title>
-                    <Text c="white" size="sm" ta="center" maw={260} mt="sm" style={{ opacity: 0.9 }}>
-                      Bluff your way through. Figure out the word from what others say.
-                    </Text>
-                  </Stack>
-                ) : (
-                  <Stack gap="sm" align="center">
-                    <Text size="xs" tt="uppercase" fw={800}
-                      style={{ letterSpacing: '0.2em', color: 'rgba(255,255,255,0.95)' }}
-                    >
-                      {round.category}
-                    </Text>
-                    <Title order={1} style={{ fontSize: 52, color: 'white' }} ta="center">
-                      {round.word}
-                    </Title>
-                    <Text size="sm" mt="sm" c="white" style={{ opacity: 0.9 }}>
-                      Don't say the word directly!
-                    </Text>
-                  </Stack>
-                )
-              ) : (
-                <Stack gap="sm" align="center">
-                  <IconHandStop size={64} stroke={1.2} color="rgba(255,255,255,0.55)" />
-                  <Text fw={700} size="lg" c="white">Press &amp; hold to reveal</Text>
-                  <Text c="white" size="xs" style={{ opacity: 0.65 }}>
-                    Release to hide instantly
-                  </Text>
-                </Stack>
-              )}
-            </div>
-          </UnstyledButton>
+            {player.isImposter ? (
+              <Stack gap="xs" align="center" className="villain-content">
+                <div className="villain-mask">
+                  <VillainMask size={64} />
+                </div>
+                <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.3em', color: '#ffb3c1' }}>
+                  you are the
+                </Text>
+                <Title className="imposter-text" style={{ fontSize: 48, lineHeight: 1 }} ta="center">
+                  IMPOSTER
+                </Title>
+                <span className="candy-chip candy-chip--pink" style={{ marginTop: 4 }}>
+                  <IconUserOff size={14} />
+                  <span>category only</span>
+                </span>
+                <Text size="lg" fw={700} mt={6} c="white">
+                  {round.category}
+                </Text>
+                <Text size="xs" c="white" ta="center" maw={240} mt="sm" style={{ opacity: 0.85, fontStyle: 'italic' }}>
+                  Deceive. Bluff. Don't get caught.
+                </Text>
+              </Stack>
+            ) : (
+              <Stack gap="sm" align="center">
+                <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.2em', color: 'rgba(255,255,255,0.95)' }}>
+                  {round.category}
+                </Text>
+                <Title order={1} style={{ fontSize: 52, color: 'white' }} ta="center">
+                  {round.word}
+                </Title>
+                <Text size="sm" mt="sm" c="white" style={{ opacity: 0.9 }}>
+                  Don't say the word directly!
+                </Text>
+              </Stack>
+            )}
+          </ScratchCard>
 
-          <CandyButton
-            color={player.hasSeenWord ? (isLast ? 'green' : 'pink') : 'violet'}
-            onClick={next}
-            disabled={!player.hasSeenWord}
-            rightIcon={<IconArrowRight size={22} />}
-          >
-            {isLast ? 'Done — start playing' : 'Give back to host'}
-          </CandyButton>
-          {!player.hasSeenWord && (
+          <div className={revealed ? 'cta-bounce' : ''}>
+            <CandyButton
+              color={revealed ? (isLast ? 'green' : 'pink') : 'violet'}
+              onClick={next}
+              disabled={!revealed}
+              rightIcon={<IconArrowRight size={22} />}
+            >
+              {isLast ? 'Done — start playing' : `Pass to ${nextPlayer?.name}`}
+            </CandyButton>
+          </div>
+          {!revealed && (
             <Text c="white" size="xs" ta="center" style={{ opacity: 0.7 }}>
-              Hold the card first
+              Scratch the card first
             </Text>
           )}
         </Stack>

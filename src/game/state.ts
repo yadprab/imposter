@@ -24,6 +24,7 @@ export const initialState: GameState = {
   playerSeeds: DEFAULT_PLAYERS.map(() => randomSeed()),
   imposterCount: 1,
   customOverride: { enabled: true, category: '', word: '' },
+  lastImposterIds: [],
   round: null
 };
 
@@ -64,7 +65,8 @@ function buildRound(
   names: string[],
   seeds: string[],
   imposterCount: number,
-  override: CustomOverride
+  override: CustomOverride,
+  excludeIds: number[] = []
 ): Round {
   let category: string;
   let word: string;
@@ -77,7 +79,10 @@ function buildRound(
     word = picked.word;
   }
 
-  const indices = shuffle(names.map((_, i) => i)).slice(0, imposterCount);
+  const allIndices = names.map((_, i) => i);
+  const filtered = allIndices.filter((i) => !excludeIds.includes(i));
+  const pool = filtered.length >= imposterCount ? filtered : allIndices;
+  const indices = shuffle(pool).slice(0, imposterCount);
   const imposterSet = new Set(indices);
   const players: Player[] = names.map((name, i) => ({
     id: i,
@@ -170,12 +175,21 @@ export function reducer(state: GameState, action: Action): GameState {
         ...state,
         customOverride: { ...state.customOverride, word: action.word }
       };
-    case 'START_ROUND':
+    case 'START_ROUND': {
+      const round = buildRound(
+        state.playerNames,
+        state.playerSeeds,
+        state.imposterCount,
+        state.customOverride,
+        state.lastImposterIds
+      );
       return {
         ...state,
         phase: 'briefing',
-        round: buildRound(state.playerNames, state.playerSeeds, state.imposterCount, state.customOverride)
+        round,
+        lastImposterIds: round.players.filter((p) => p.isImposter).map((p) => p.id)
       };
+    }
     case 'MARK_HOST_BRIEFED':
       if (!state.round) return state;
       return { ...state, round: { ...state.round, hostBriefed: true } };
@@ -197,12 +211,21 @@ export function reducer(state: GameState, action: Action): GameState {
     }
     case 'END_ROUND':
       return { ...state, phase: 'end' };
-    case 'NEW_ROUND_SAME_PLAYERS':
+    case 'NEW_ROUND_SAME_PLAYERS': {
+      const round = buildRound(
+        state.playerNames,
+        state.playerSeeds,
+        state.imposterCount,
+        state.customOverride,
+        state.lastImposterIds
+      );
       return {
         ...state,
         phase: 'briefing',
-        round: buildRound(state.playerNames, state.playerSeeds, state.imposterCount, state.customOverride)
+        round,
+        lastImposterIds: round.players.filter((p) => p.isImposter).map((p) => p.id)
       };
+    }
     case 'BACK_TO_PLAYERS':
       return { ...state, phase: 'players-setup', round: null };
     case 'RESET':

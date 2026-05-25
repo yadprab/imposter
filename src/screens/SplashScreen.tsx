@@ -1,5 +1,6 @@
 import { Stack, Text, Title } from '@mantine/core';
 import { useEffect, useState } from 'react';
+import { Sparkle, StarShape } from '../components/icons';
 import type { Action } from '../game/state';
 
 interface Props {
@@ -43,10 +44,10 @@ export function SplashScreen({ dispatch }: Props) {
             IMPOSTER
           </Title>
         </Stack>
-        <span className="star-deco" style={{ top: -10, left: -8, fontSize: 28 }}>✦</span>
-        <span className="star-deco" style={{ top: 30, right: -10, fontSize: 22, animationDelay: '0.5s' }}>★</span>
-        <span className="star-deco" style={{ bottom: -20, left: 24, fontSize: 18, animationDelay: '1.0s' }}>✦</span>
-        <span className="star-deco" style={{ bottom: -5, right: 18, fontSize: 24, animationDelay: '1.4s' }}>★</span>
+        <span className="star-deco" style={{ top: -10, left: -8 }}><Sparkle size={28} color="#ffd866" /></span>
+        <span className="star-deco" style={{ top: 30, right: -10, animationDelay: '0.5s' }}><StarShape size={22} color="#ff6cc4" /></span>
+        <span className="star-deco" style={{ bottom: -20, left: 24, animationDelay: '1.0s' }}><Sparkle size={18} color="#ffffff" /></span>
+        <span className="star-deco" style={{ bottom: -5, right: 18, animationDelay: '1.4s' }}><StarShape size={24} color="#ffd866" /></span>
       </div>
 
       <Stack gap={8} align="center" w="80%" maw={280}>
