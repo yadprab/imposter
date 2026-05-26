@@ -12,7 +12,7 @@ const ROLE_CHIP_CLASS: Record<Role, string> = {
   crew: 'candy-chip',
   mafia: 'candy-chip candy-chip--pink',
   doctor: 'candy-chip',
-  detective: 'candy-chip',
+  god: 'candy-chip',
   villager: 'candy-chip'
 };
 
@@ -21,7 +21,7 @@ const ROLE_LABEL: Record<Role, string> = {
   crew: 'Crew',
   mafia: 'Mafia',
   doctor: 'Doctor',
-  detective: 'Detective',
+  god: 'God',
   villager: 'Villager'
 };
 
@@ -48,7 +48,7 @@ export function BriefingScreen() {
   }
   const roleOrder: Role[] = isImposter
     ? ['imposter']
-    : ['mafia', 'doctor', 'detective', 'villager'];
+    : ['mafia', 'doctor', 'god', 'villager'];
 
   return (
     <Stack gap="lg" style={{ flex: 1 }}>

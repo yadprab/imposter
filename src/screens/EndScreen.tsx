@@ -16,7 +16,7 @@ const MAFIA_INSTRUCTIONS = [
   '2. Mafia opens eyes, silently picks a target.',
   '3. Doctor opens, picks one to save.',
   '4. Day: host announces who (if anyone) died. Discuss and vote out loud.',
-  '5. Detective already knows the mafia — drop clues without getting killed.',
+  '5. God already knows the mafia — drop clues without getting killed.',
   '6. Mafia wins if they equal/outnumber the town. Town wins if all mafia are out.'
 ];
 

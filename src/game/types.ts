@@ -9,7 +9,7 @@ export type Phase =
 
 export type GameMode = 'imposter' | 'mafia';
 
-export type Role = 'imposter' | 'crew' | 'mafia' | 'doctor' | 'detective' | 'villager';
+export type Role = 'imposter' | 'crew' | 'mafia' | 'doctor' | 'god' | 'villager';
 
 export interface Player {
   id: number;
@@ -44,7 +44,7 @@ export interface GameState {
   imposterCount: number;
   mafiaCount: number;
   hasDoctor: boolean;
-  hasDetective: boolean;
+  hasGod: boolean;
   customOverride: CustomOverride;
   lastImposterIds: number[];
   removedByHostFilter: { name: string; seed: string } | null;

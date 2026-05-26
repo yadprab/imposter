@@ -24,7 +24,7 @@ export function PlayersSetupScreen() {
   const imposterCount = useGameStore((s) => s.imposterCount);
   const mafiaCount = useGameStore((s) => s.mafiaCount);
   const hasDoctor = useGameStore((s) => s.hasDoctor);
-  const hasDetective = useGameStore((s) => s.hasDetective);
+  const hasGod = useGameStore((s) => s.hasGod);
   const customOverride = useGameStore((s) => s.customOverride);
 
   const setPlayerName = useGameStore((s) => s.setPlayerName);
@@ -34,7 +34,7 @@ export function PlayersSetupScreen() {
   const setImposterCount = useGameStore((s) => s.setImposterCount);
   const setMafiaCount = useGameStore((s) => s.setMafiaCount);
   const toggleDoctor = useGameStore((s) => s.toggleDoctor);
-  const toggleDetective = useGameStore((s) => s.toggleDetective);
+  const toggleGod = useGameStore((s) => s.toggleGod);
   const toggleCustomOverride = useGameStore((s) => s.toggleCustomOverride);
   const setCustomCategory = useGameStore((s) => s.setCustomCategory);
   const setCustomWord = useGameStore((s) => s.setCustomWord);
@@ -45,7 +45,7 @@ export function PlayersSetupScreen() {
   const [customOpen, setCustomOpen] = useState(customOverride.enabled);
   const playerCount = playerNames.length;
   const maxImposters = Math.max(1, Math.floor((playerCount - 1) / 2));
-  const specialRoles = (hasDoctor ? 1 : 0) + (hasDetective ? 1 : 0);
+  const specialRoles = (hasDoctor ? 1 : 0) + (hasGod ? 1 : 0);
   const maxMafia = Math.max(1, playerCount - 1 - specialRoles);
   const namesFilled = playerNames.every((n) => n.trim().length > 0);
   const customOk =
@@ -177,12 +177,12 @@ export function PlayersSetupScreen() {
             </Group>
             <Group justify="space-between" align="center">
               <Stack gap={0}>
-                <Text fw={700} c="white" size="lg">Detective</Text>
-                <Text size="xs" c="white" style={{ opacity: 0.7 }}>Investigates one each night</Text>
+                <Text fw={700} c="white" size="lg">God</Text>
+                <Text size="xs" c="white" style={{ opacity: 0.7 }}>Knows who the mafia are from the start</Text>
               </Stack>
               <Switch
-                checked={hasDetective}
-                onChange={toggleDetective}
+                checked={hasGod}
+                onChange={toggleGod}
                 color="cyan"
                 size="md"
               />

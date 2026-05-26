@@ -1,8 +1,8 @@
 import { Group, Stack, Text, Title } from '@mantine/core';
 import {
   IconArrowRight,
+  IconEye,
   IconHeartFilled,
-  IconSearch,
   IconUserOff,
   IconUsers
 } from '@tabler/icons-react';
@@ -21,7 +21,7 @@ const ROLE_CARD_CLASS: Record<Role, string> = {
   crew: 'crew-card',
   mafia: 'mafia-card',
   doctor: 'doctor-card',
-  detective: 'detective-card',
+  god: 'god-card',
   villager: 'villager-card'
 };
 
@@ -222,14 +222,14 @@ function RoleContent({ role, category, word, currentPlayerId, mafiaPlayers }: Co
       </Stack>
     );
   }
-  if (role === 'detective') {
+  if (role === 'god') {
     return (
       <Stack gap="xs" align="center">
-        <IconSearch size={48} color="#fff" stroke={2.5} style={{ filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.6))' }} />
+        <IconEye size={52} color="#fff" stroke={2.5} style={{ filter: 'drop-shadow(0 0 14px rgba(255,255,255,0.7))' }} />
         <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.3em', color: 'rgba(255,255,255,0.9)' }}>
-          you are the
+          you are
         </Text>
-        <Title style={{ fontSize: 36, color: 'white', lineHeight: 1 }} ta="center">DETECTIVE</Title>
+        <Title style={{ fontSize: 48, color: 'white', lineHeight: 1 }} ta="center">GOD</Title>
         <Text size="xs" tt="uppercase" fw={800} mt="sm"
           style={{ letterSpacing: '0.2em', color: 'rgba(255,255,255,0.95)' }}
         >
@@ -244,7 +244,7 @@ function RoleContent({ role, category, word, currentPlayerId, mafiaPlayers }: Co
           ))}
         </Group>
         <Text size="xs" c="white" ta="center" maw={260} mt="sm" style={{ opacity: 0.9, fontStyle: 'italic' }}>
-          You know the truth. Guide the vote without outing yourself too early.
+          You see everything. Guide the vote without outing yourself too early.
         </Text>
       </Stack>
     );

@@ -352,7 +352,7 @@ html, body, #root {
   color: white;
 }
 
-.detective-card {
+.god-card {
   background:
     radial-gradient(ellipse 80% 60% at 50% 30%, rgba(102, 217, 232, 0.5), transparent 60%),
     linear-gradient(135deg, #1098ad 0%, #0b6b7a 100%);

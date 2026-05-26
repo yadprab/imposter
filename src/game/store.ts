@@ -35,7 +35,7 @@ function makeInitialState(): GameState {
     imposterCount: 1,
     mafiaCount: 1,
     hasDoctor: true,
-    hasDetective: true,
+    hasGod: true,
     customOverride: { enabled: true, category: '', word: '' },
     lastImposterIds: [],
     removedByHostFilter: null,
@@ -59,7 +59,7 @@ interface BuildArgs {
   imposterCount: number;
   mafiaCount: number;
   hasDoctor: boolean;
-  hasDetective: boolean;
+  hasGod: boolean;
   override: CustomOverride;
   excludeIds?: number[];
 }
@@ -71,7 +71,7 @@ function buildRound({
   imposterCount,
   mafiaCount,
   hasDoctor,
-  hasDetective,
+  hasGod,
   override,
   excludeIds = []
 }: BuildArgs): Round {
@@ -107,7 +107,7 @@ function buildRound({
     };
     take(mafiaCount, 'mafia');
     if (hasDoctor) take(1, 'doctor');
-    if (hasDetective) take(1, 'detective');
+    if (hasGod) take(1, 'god');
     for (const i of allIndices) if (!roleByIdx.has(i)) roleByIdx.set(i, 'villager');
   }
 
@@ -147,7 +147,7 @@ interface GameStore extends GameState {
   setImposterCount: (count: number) => void;
   setMafiaCount: (count: number) => void;
   toggleDoctor: () => void;
-  toggleDetective: () => void;
+  toggleGod: () => void;
 
   toggleCustomOverride: () => void;
   setCustomCategory: (category: string) => void;
@@ -258,7 +258,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setImposterCount: (count) => set({ imposterCount: count }),
   setMafiaCount: (count) => set({ mafiaCount: count }),
   toggleDoctor: () => set({ hasDoctor: !get().hasDoctor }),
-  toggleDetective: () => set({ hasDetective: !get().hasDetective }),
+  toggleGod: () => set({ hasGod: !get().hasGod }),
 
   toggleCustomOverride: () =>
     set({
@@ -284,7 +284,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       imposterCount: state.imposterCount,
       mafiaCount: state.mafiaCount,
       hasDoctor: state.hasDoctor,
-      hasDetective: state.hasDetective,
+      hasGod: state.hasGod,
       override: state.customOverride,
       excludeIds: state.lastImposterIds
     });
@@ -341,7 +341,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       imposterCount: state.imposterCount,
       mafiaCount: state.mafiaCount,
       hasDoctor: state.hasDoctor,
-      hasDetective: state.hasDetective,
+      hasGod: state.hasGod,
       override: state.customOverride,
       excludeIds: state.lastImposterIds
     });
