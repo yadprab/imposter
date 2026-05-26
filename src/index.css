@@ -196,6 +196,18 @@ html, body, #root {
 }
 
 /* REVEAL CARDS - imposter & crew */
+/* CARD-COVERED - neutral wrapper used while scratch surface is still on top */
+.card-covered {
+  background: linear-gradient(135deg, #6741d9 0%, #3a1a8a 100%);
+  border: 4px solid #2d1b6b;
+  border-radius: 28px;
+  box-shadow:
+    0 12px 0 #2d1b6b,
+    0 18px 30px rgba(0, 0, 0, 0.45),
+    inset 0 2px 0 rgba(255, 255, 255, 0.18);
+  color: white;
+}
+
 .imposter-card {
   background:
     linear-gradient(135deg, #ff4d6d 0%, #c9184a 100%);
@@ -306,6 +318,60 @@ html, body, #root {
     0 12px 0 #0b6b7a,
     0 18px 50px rgba(102, 217, 232, 0.45),
     inset 0 2px 0 rgba(255, 255, 255, 0.35);
+  border-radius: 28px;
+  color: white;
+}
+
+/* MAFIA reveal cards */
+.mafia-card {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 30%, rgba(255, 77, 109, 0.5), transparent 60%),
+    radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.65) 100%),
+    linear-gradient(135deg, #5a0014 0%, #1a0207 50%, #0a0103 100%);
+  border: 4px solid #2a0008;
+  box-shadow:
+    0 12px 0 #2a0008,
+    0 18px 50px rgba(255, 0, 60, 0.45),
+    inset 0 0 60px rgba(0, 0, 0, 0.6),
+    inset 0 2px 0 rgba(255, 77, 109, 0.25);
+  border-radius: 28px;
+  color: white;
+  animation: villainGlow 2s ease-in-out infinite;
+}
+
+.doctor-card {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 30%, rgba(105, 219, 124, 0.45), transparent 60%),
+    linear-gradient(135deg, #2f9e44 0%, #1d6f2e 100%);
+  border: 4px solid #154a1f;
+  box-shadow:
+    0 12px 0 #154a1f,
+    0 18px 50px rgba(47, 158, 68, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+  border-radius: 28px;
+  color: white;
+}
+
+.detective-card {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 30%, rgba(102, 217, 232, 0.5), transparent 60%),
+    linear-gradient(135deg, #1098ad 0%, #0b6b7a 100%);
+  border: 4px solid #084c57;
+  box-shadow:
+    0 12px 0 #084c57,
+    0 18px 50px rgba(16, 152, 173, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.3);
+  border-radius: 28px;
+  color: white;
+}
+
+.villager-card {
+  background: linear-gradient(135deg, #8957e5 0%, #4226a3 100%);
+  border: 4px solid #2a1668;
+  box-shadow:
+    0 12px 0 #2a1668,
+    0 18px 50px rgba(137, 87, 229, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.25);
   border-radius: 28px;
   color: white;
 }

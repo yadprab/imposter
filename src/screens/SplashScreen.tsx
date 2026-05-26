@@ -1,15 +1,12 @@
 import { Stack, Text, Title } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { Sparkle, StarShape } from '../components/icons';
-import type { Action } from '../game/state';
-
-interface Props {
-  dispatch: React.Dispatch<Action>;
-}
+import { useGameStore } from '../game/store';
 
 const DURATION = 1800;
 
-export function SplashScreen({ dispatch }: Props) {
+export function SplashScreen() {
+  const leaveSplash = useGameStore((s) => s.leaveSplash);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -20,11 +17,11 @@ export function SplashScreen({ dispatch }: Props) {
       setProgress(pct);
       if (pct >= 100) {
         clearInterval(id);
-        setTimeout(() => dispatch({ type: 'LEAVE_SPLASH' }), 220);
+        setTimeout(() => leaveSplash(), 220);
       }
     }, 40);
     return () => clearInterval(id);
-  }, [dispatch]);
+  }, [leaveSplash]);
 
   return (
     <Stack
@@ -32,16 +29,16 @@ export function SplashScreen({ dispatch }: Props) {
       style={{ flex: 1 }}
       justify="center"
       align="center"
-      onClick={() => dispatch({ type: 'LEAVE_SPLASH' })}
+      onClick={leaveSplash}
     >
       <div style={{ position: 'relative' }}>
         <Stack gap={4} align="center" className="title-stack splash-rise">
-          <Text className="tagline">a party game</Text>
+          <Text className="tagline">trip squad games</Text>
           <Title
             className="wordmark splash-stamp"
-            style={{ fontSize: 'clamp(56px, 18vw, 84px)' }}
+            style={{ fontSize: 'clamp(48px, 16vw, 76px)' }}
           >
-            IMPOSTER
+            CRM TRIP
           </Title>
         </Stack>
         <span className="star-deco" style={{ top: -10, left: -8 }}><Sparkle size={28} color="#ffd866" /></span>

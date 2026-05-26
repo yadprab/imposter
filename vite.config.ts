@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['icon.svg', 'icon-maskable.svg', 'apple-touch-icon.svg'],
       manifest: {
-        name: 'Imposter — Party Game',
-        short_name: 'Imposter',
-        description: 'Offline-first pass-the-phone imposter party game',
+        name: 'CRM Trip — Party Games',
+        short_name: 'CRM Trip',
+        description: 'Offline-first pass-the-phone party games (Imposter & Mafia)',
         theme_color: '#1a0d3d',
         background_color: '#1a0d3d',
         display: 'standalone',

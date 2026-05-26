@@ -6,39 +6,59 @@ export interface WordPack {
 export const WORD_PACKS: WordPack[] = [
   {
     category: 'Animals',
-    words: ['Elephant', 'Penguin', 'Octopus', 'Kangaroo', 'Giraffe', 'Dolphin', 'Tiger', 'Koala', 'Crocodile', 'Hedgehog']
+    words: ['Dog', 'Cat', 'Cow', 'Elephant', 'Tiger', 'Lion', 'Monkey', 'Horse', 'Rabbit', 'Snake']
+  },
+  {
+    category: 'Fruits',
+    words: ['Apple', 'Banana', 'Mango', 'Grapes', 'Watermelon', 'Pineapple', 'Strawberry', 'Orange', 'Papaya', 'Guava']
+  },
+  {
+    category: 'Vegetables',
+    words: ['Potato', 'Tomato', 'Onion', 'Carrot', 'Garlic', 'Ginger', 'Cabbage', 'Beans', 'Chili', 'Brinjal']
   },
   {
     category: 'Food',
-    words: ['Pizza', 'Sushi', 'Biryani', 'Ramen', 'Tacos', 'Pancakes', 'Dosa', 'Burger', 'Pasta', 'Ice cream']
+    words: ['Pizza', 'Dosa', 'Biryani', 'Burger', 'Pasta', 'Noodles', 'Sandwich', 'Idli', 'Cake', 'Ice cream']
+  },
+  {
+    category: 'Drinks',
+    words: ['Coffee', 'Tea', 'Milk', 'Water', 'Juice', 'Lassi', 'Coke', 'Beer', 'Wine', 'Smoothie']
+  },
+  {
+    category: 'Places',
+    words: ['Paris', 'Tokyo', 'Mumbai', 'Chennai', 'Goa', 'Dubai', 'New York', 'London', 'Bangkok', 'Singapore']
+  },
+  {
+    category: 'Sports',
+    words: ['Cricket', 'Football', 'Tennis', 'Swimming', 'Basketball', 'Badminton', 'Hockey', 'Boxing', 'Cycling', 'Running']
   },
   {
     category: 'Movies',
-    words: ['Inception', 'Titanic', 'Avengers', 'Interstellar', 'Joker', 'Frozen', 'Avatar', 'Gladiator', 'Parasite', 'Up']
+    words: ['Titanic', 'Avatar', 'Avengers', 'Inception', 'Jurassic Park', 'Frozen', 'Joker', 'Interstellar', 'Lion King', 'Iron Man']
   },
   {
     category: 'Kollywood movies',
     words: ['Vikram', 'Jailer', 'Master', 'Kaithi', 'Asuran', '96', 'Vada Chennai', 'Sarpatta Parambarai', 'Karnan', 'Petta']
   },
   {
-    category: 'Places',
-    words: ['Paris', 'Tokyo', 'New York', 'Goa', 'Dubai', 'Iceland', 'Bali', 'London', 'Venice', 'Singapore']
-  },
-  {
-    category: 'Sports',
-    words: ['Cricket', 'Football', 'Tennis', 'Swimming', 'Boxing', 'Cycling', 'Hockey', 'Skiing', 'Surfing', 'Golf']
-  },
-  {
     category: 'Jobs',
-    words: ['Doctor', 'Pilot', 'Chef', 'Teacher', 'Astronaut', 'Firefighter', 'Detective', 'Farmer', 'Dentist', 'Lawyer']
+    words: ['Doctor', 'Teacher', 'Police', 'Driver', 'Cook', 'Singer', 'Engineer', 'Pilot', 'Farmer', 'Actor']
   },
   {
-    category: 'Tech',
-    words: ['iPhone', 'Laptop', 'Headphones', 'Drone', 'Smartwatch', 'Keyboard', 'Tablet', 'Router', 'Console', 'Camera']
+    category: 'Body parts',
+    words: ['Hand', 'Eye', 'Ear', 'Nose', 'Hair', 'Mouth', 'Leg', 'Foot', 'Finger', 'Tooth']
+  },
+  {
+    category: 'Colors',
+    words: ['Red', 'Blue', 'Green', 'Yellow', 'Pink', 'Purple', 'Black', 'White', 'Orange', 'Brown']
   },
   {
     category: 'Household',
-    words: ['Pillow', 'Toaster', 'Mirror', 'Fridge', 'Curtain', 'Soap', 'Broom', 'Kettle', 'Carpet', 'Blanket']
+    words: ['Bed', 'Chair', 'Table', 'Pillow', 'Mirror', 'Fan', 'Lamp', 'Sofa', 'Blanket', 'Curtain']
+  },
+  {
+    category: 'Clothes',
+    words: ['Shirt', 'Pants', 'Saree', 'Dress', 'Shoes', 'Socks', 'Hat', 'Belt', 'Jacket', 'Watch']
   }
 ];
 

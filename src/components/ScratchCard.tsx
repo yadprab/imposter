@@ -243,7 +243,7 @@ export function ScratchCard({
     <div style={{ position: 'relative', width: '100%' }}>
       <div
         ref={containerRef}
-        className={cardClassName}
+        className={fading ? cardClassName : 'card-covered'}
         style={{
           position: 'relative',
           overflow: 'hidden',

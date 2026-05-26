@@ -1,42 +1,55 @@
 import { Group, Stack, Text, Title } from '@mantine/core';
-import { IconArrowRight, IconUserOff } from '@tabler/icons-react';
+import {
+  IconArrowRight,
+  IconHeartFilled,
+  IconSearch,
+  IconUserOff,
+  IconUsers
+} from '@tabler/icons-react';
 import { useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { CandyButton } from '../components/CandyButton';
 import { VillainMask } from '../components/icons';
 import { ScratchCard } from '../components/ScratchCard';
-import type { Action } from '../game/state';
-import type { GameState } from '../game/types';
-
-interface Props {
-  state: GameState;
-  dispatch: React.Dispatch<Action>;
-}
+import { useGameStore } from '../game/store';
+import type { Role } from '../game/types';
 
 type Stage = 'pass' | 'reveal';
 
-export function PassRevealScreen({ state, dispatch }: Props) {
+const ROLE_CARD_CLASS: Record<Role, string> = {
+  imposter: 'imposter-villain',
+  crew: 'crew-card',
+  mafia: 'mafia-card',
+  doctor: 'doctor-card',
+  detective: 'detective-card',
+  villager: 'villager-card'
+};
+
+export function PassRevealScreen() {
+  const round = useGameStore((s) => s.round);
+  const markRevealed = useGameStore((s) => s.markRevealed);
+  const advanceReveal = useGameStore((s) => s.advanceReveal);
+  const endRound = useGameStore((s) => s.endRound);
   const [stage, setStage] = useState<Stage>('pass');
   const [revealed, setRevealed] = useState(false);
 
-  if (!state.round) return null;
-  const round = state.round;
+  if (!round) return null;
   const player = round.players[round.currentRevealIndex];
   const isLast = round.currentRevealIndex === round.players.length - 1;
   const nextPlayer = !isLast ? round.players[round.currentRevealIndex + 1] : null;
-  const progress = ((round.currentRevealIndex + (stage === 'reveal' ? 0.5 : 0)) / round.players.length) * 100;
+  const progress =
+    ((round.currentRevealIndex + (stage === 'reveal' ? 0.5 : 0)) / round.players.length) * 100;
 
   function onReveal() {
     setRevealed(true);
-    if (!player.hasSeenWord) {
-      dispatch({ type: 'MARK_REVEALED', playerId: player.id });
-    }
+    if (!player.hasSeenWord) markRevealed(player.id);
   }
+
   function next() {
     if (isLast) {
-      dispatch({ type: 'END_ROUND' });
+      endRound();
     } else {
-      dispatch({ type: 'ADVANCE_REVEAL' });
+      advanceReveal();
       setStage('pass');
       setRevealed(false);
     }
@@ -49,7 +62,8 @@ export function PassRevealScreen({ state, dispatch }: Props) {
           <Text className="tagline">
             {round.currentRevealIndex + 1} of {round.players.length}
           </Text>
-          <span className="candy-chip">{round.category}</span>
+          {round.mode === 'imposter' && <span className="candy-chip">{round.category}</span>}
+          {round.mode === 'mafia' && <span className="candy-chip">Mafia</span>}
         </Group>
         <div className="candy-progress">
           <div className="candy-progress-fill" style={{ width: `${progress}%` }} />
@@ -83,49 +97,17 @@ export function PassRevealScreen({ state, dispatch }: Props) {
 
           <ScratchCard
             key={player.id}
-            cardClassName={player.isImposter ? 'imposter-villain' : 'crew-card'}
-            hint={player.isImposter ? 'SCRATCH IF YOU DARE' : 'SCRATCH TO REVEAL'}
-            surfaceFrom={player.isImposter ? '#3a0612' : '#8957e5'}
-            surfaceTo={player.isImposter ? '#1a0207' : '#3a1a8a'}
-            hintColor={player.isImposter ? '#ff4d6d' : '#ffd866'}
+            cardClassName={ROLE_CARD_CLASS[player.role]}
             onReveal={onReveal}
             minHeight={360}
           >
-            {player.isImposter ? (
-              <Stack gap="xs" align="center">
-                <div className="villain-mask">
-                  <VillainMask size={64} />
-                </div>
-                <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.3em', color: '#ffb3c1' }}>
-                  you are the
-                </Text>
-                <Title className="imposter-text" style={{ fontSize: 48, lineHeight: 1 }} ta="center">
-                  IMPOSTER
-                </Title>
-                <span className="candy-chip candy-chip--pink" style={{ marginTop: 4 }}>
-                  <IconUserOff size={14} />
-                  <span>category only</span>
-                </span>
-                <Text size="lg" fw={700} mt={6} c="white">
-                  {round.category}
-                </Text>
-                <Text size="xs" c="white" ta="center" maw={240} mt="sm" style={{ opacity: 0.85, fontStyle: 'italic' }}>
-                  Deceive. Bluff. Don't get caught.
-                </Text>
-              </Stack>
-            ) : (
-              <Stack gap="sm" align="center">
-                <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.2em', color: 'rgba(255,255,255,0.95)' }}>
-                  {round.category}
-                </Text>
-                <Title order={1} style={{ fontSize: 52, color: 'white' }} ta="center">
-                  {round.word}
-                </Title>
-                <Text size="sm" mt="sm" c="white" style={{ opacity: 0.9 }}>
-                  Don't say the word directly!
-                </Text>
-              </Stack>
-            )}
+            <RoleContent
+              role={player.role}
+              category={round.category}
+              word={round.word}
+              currentPlayerId={player.id}
+              mafiaPlayers={round.players.filter((p) => p.role === 'mafia')}
+            />
           </ScratchCard>
 
           <div className={revealed ? 'cta-bounce' : ''}>
@@ -145,6 +127,139 @@ export function PassRevealScreen({ state, dispatch }: Props) {
           )}
         </Stack>
       )}
+    </Stack>
+  );
+}
+
+interface ContentProps {
+  role: Role;
+  category: string;
+  word: string;
+  currentPlayerId: number;
+  mafiaPlayers: { id: number; name: string; seed: string }[];
+}
+
+function RoleContent({ role, category, word, currentPlayerId, mafiaPlayers }: ContentProps) {
+  if (role === 'imposter') {
+    return (
+      <Stack gap="xs" align="center">
+        <div className="villain-mask"><VillainMask size={64} /></div>
+        <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.3em', color: '#ffb3c1' }}>
+          you are the
+        </Text>
+        <Title className="imposter-text" style={{ fontSize: 48, lineHeight: 1 }} ta="center">
+          IMPOSTER
+        </Title>
+        <span className="candy-chip candy-chip--pink" style={{ marginTop: 4 }}>
+          <IconUserOff size={14} />
+          <span>category only</span>
+        </span>
+        <Text size="lg" fw={700} mt={6} c="white">{category}</Text>
+        <Text size="xs" c="white" ta="center" maw={240} mt="sm" style={{ opacity: 0.85, fontStyle: 'italic' }}>
+          Deceive. Bluff. Don't get caught.
+        </Text>
+      </Stack>
+    );
+  }
+  if (role === 'crew') {
+    return (
+      <Stack gap="sm" align="center">
+        <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.2em', color: 'rgba(255,255,255,0.95)' }}>
+          {category}
+        </Text>
+        <Title order={1} style={{ fontSize: 52, color: 'white' }} ta="center">{word}</Title>
+        <Text size="sm" mt="sm" c="white" style={{ opacity: 0.9 }}>
+          Don't say the word directly!
+        </Text>
+      </Stack>
+    );
+  }
+  if (role === 'mafia') {
+    const teammates = mafiaPlayers.filter((p) => p.id !== currentPlayerId);
+    return (
+      <Stack gap="xs" align="center">
+        <div className="villain-mask"><VillainMask size={56} /></div>
+        <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.3em', color: '#ffb3c1' }}>
+          you are the
+        </Text>
+        <Title className="imposter-text" style={{ fontSize: 44, lineHeight: 1 }} ta="center">
+          MAFIA
+        </Title>
+        {teammates.length > 0 && (
+          <>
+            <Text size="xs" tt="uppercase" fw={800} mt="sm"
+              style={{ letterSpacing: '0.2em', color: 'rgba(255,255,255,0.9)' }}
+            >
+              {teammates.length > 1 ? 'Your team' : 'Your partner'}
+            </Text>
+            <Group justify="center" gap={6} wrap="wrap">
+              {teammates.map((m) => (
+                <span key={m.id} className="candy-chip candy-chip--pink">
+                  <Avatar seed={m.seed} size={22} />
+                  <span>{m.name}</span>
+                </span>
+              ))}
+            </Group>
+          </>
+        )}
+        <Text size="xs" c="white" ta="center" maw={260} mt="sm" style={{ opacity: 0.85, fontStyle: 'italic' }}>
+          At night, agree silently on a target. By day, blend in.
+        </Text>
+      </Stack>
+    );
+  }
+  if (role === 'doctor') {
+    return (
+      <Stack gap="xs" align="center">
+        <IconHeartFilled size={56} color="#fff" style={{ filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.6))' }} />
+        <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.3em', color: 'rgba(255,255,255,0.9)' }}>
+          you are the
+        </Text>
+        <Title style={{ fontSize: 44, color: 'white', lineHeight: 1 }} ta="center">DOCTOR</Title>
+        <Text size="xs" c="white" ta="center" maw={260} mt="sm" style={{ opacity: 0.9, fontStyle: 'italic' }}>
+          Each night, pick one player to save from the mafia.
+        </Text>
+      </Stack>
+    );
+  }
+  if (role === 'detective') {
+    return (
+      <Stack gap="xs" align="center">
+        <IconSearch size={48} color="#fff" stroke={2.5} style={{ filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.6))' }} />
+        <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.3em', color: 'rgba(255,255,255,0.9)' }}>
+          you are the
+        </Text>
+        <Title style={{ fontSize: 36, color: 'white', lineHeight: 1 }} ta="center">DETECTIVE</Title>
+        <Text size="xs" tt="uppercase" fw={800} mt="sm"
+          style={{ letterSpacing: '0.2em', color: 'rgba(255,255,255,0.95)' }}
+        >
+          {mafiaPlayers.length > 1 ? 'The mafia are' : 'The mafia is'}
+        </Text>
+        <Group justify="center" gap={6} wrap="wrap">
+          {mafiaPlayers.map((m) => (
+            <span key={m.id} className="candy-chip candy-chip--pink">
+              <Avatar seed={m.seed} size={22} />
+              <span>{m.name}</span>
+            </span>
+          ))}
+        </Group>
+        <Text size="xs" c="white" ta="center" maw={260} mt="sm" style={{ opacity: 0.9, fontStyle: 'italic' }}>
+          You know the truth. Guide the vote without outing yourself too early.
+        </Text>
+      </Stack>
+    );
+  }
+  // villager
+  return (
+    <Stack gap="xs" align="center">
+      <IconUsers size={56} color="#fff" stroke={2.5} style={{ filter: 'drop-shadow(0 0 12px rgba(255,255,255,0.5))' }} />
+      <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.3em', color: 'rgba(255,255,255,0.9)' }}>
+        you are a
+      </Text>
+      <Title style={{ fontSize: 44, color: 'white', lineHeight: 1 }} ta="center">VILLAGER</Title>
+      <Text size="xs" c="white" ta="center" maw={260} mt="sm" style={{ opacity: 0.9, fontStyle: 'italic' }}>
+        Sleep at night. By day, vote to find the mafia.
+      </Text>
     </Stack>
   );
 }
