@@ -462,6 +462,113 @@ html, body, #root {
   100% { transform: scale(1); opacity: 1; }
 }
 
+/* VICTORY - mafia game over banner */
+.victory-card {
+  padding: 26px 18px 22px;
+  border-radius: 22px;
+  border: 3px solid;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  animation: roleArtPop 0.45s ease;
+}
+
+.victory-card--town {
+  background: linear-gradient(180deg, #2f9e44, #1f7a33);
+  border-color: #ffe066;
+}
+
+.victory-card--mafia {
+  background: linear-gradient(180deg, #c2255c, #7a1d3d);
+  border-color: #ff8cc7;
+}
+
+/* PHASE STEPPER - mafia night/day rounds */
+.phase-card {
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 3px solid;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.35);
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.phase-card--night {
+  background: linear-gradient(180deg, #1a1340, #0e0a26);
+  border-color: #3a2f7a;
+}
+
+.phase-card--day {
+  background: linear-gradient(180deg, #6b3ba8, #4a2f9e);
+  border-color: #8957e5;
+}
+
+/* KILL TRACKER - mafia day/night eliminations */
+.kill-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 10px 6px 6px;
+  background: linear-gradient(180deg, #2d1b6b, #1f1454);
+  border: 2px solid #4a2f9e;
+  border-radius: 14px;
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.08s ease, opacity 0.15s ease;
+}
+
+.kill-row:active {
+  transform: scale(0.98);
+}
+
+.kill-row-name {
+  flex: 1;
+  text-align: left;
+}
+
+.kill-row--dead {
+  opacity: 0.55;
+}
+
+.kill-row--dead .kill-row-name {
+  text-decoration: line-through;
+}
+
+.kill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.kill-tag--alive {
+  background: rgba(64, 192, 87, 0.2);
+  color: #69db7c;
+}
+
+.kill-tag--night {
+  background: rgba(0, 0, 0, 0.45);
+  color: #adb5bd;
+}
+
+.kill-tag--day {
+  background: rgba(230, 73, 128, 0.25);
+  color: #ff8cc7;
+}
+
+.win-banner {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #3a1a8a, #2d1b6b);
+  border: 2px solid #6741d9;
+}
+
 /* MANUAL ROLE PICKER - tappable player chips */
 .role-pick {
   display: inline-flex;
