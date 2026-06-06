@@ -34,6 +34,11 @@ export interface CustomOverride {
   word: string;
 }
 
+export interface ManualRoles {
+  enabled: boolean;
+  byIndex: Record<number, Role>;
+}
+
 export interface GameState {
   phase: Phase;
   gameMode: GameMode | null;
@@ -46,6 +51,8 @@ export interface GameState {
   hasDoctor: boolean;
   hasGod: boolean;
   customOverride: CustomOverride;
+  manualRoles: ManualRoles;
+  imposterHistory: Record<string, number>;
   lastImposterIds: number[];
   removedByHostFilter: { name: string; seed: string } | null;
   round: Round | null;

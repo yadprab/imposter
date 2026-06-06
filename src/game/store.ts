@@ -4,11 +4,54 @@ import type {
   CustomOverride,
   GameMode,
   GameState,
+  ManualRoles,
   Player,
   Role,
   Round
 } from './types';
 import { pickRandomWord } from './words';
+
+const HISTORY_KEY = 'crm-trip-villain-history';
+
+function nameKey(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function loadHistory(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveHistory(history: Record<string, number>) {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  } catch {
+    /* storage unavailable — keep in-memory only */
+  }
+}
+
+function chooseVillains(
+  candidates: number[],
+  count: number,
+  names: string[],
+  history: Record<string, number>
+): number[] {
+  const pool = [...candidates];
+  const chosen: number[] = [];
+  while (chosen.length < count && pool.length > 0) {
+    const counts = pool.map((i) => history[nameKey(names[i])] ?? 0);
+    const minCount = Math.min(...counts);
+    const tier = pool.filter((i) => (history[nameKey(names[i])] ?? 0) === minCount);
+    const pick = tier[Math.floor(Math.random() * tier.length)];
+    chosen.push(pick);
+    pool.splice(pool.indexOf(pick), 1);
+  }
+  return chosen;
+}
 
 const DEFAULT_PLAYERS = [
   'Ram',
@@ -37,10 +80,33 @@ function makeInitialState(): GameState {
     hasDoctor: true,
     hasGod: true,
     customOverride: { enabled: true, category: '', word: '' },
+    manualRoles: { enabled: false, byIndex: {} },
+    imposterHistory: loadHistory(),
     lastImposterIds: [],
     removedByHostFilter: null,
     round: null
   };
+}
+
+export function manualComplete(
+  mode: GameMode,
+  manual: ManualRoles,
+  imposterCount: number,
+  mafiaCount: number,
+  hasDoctor: boolean,
+  hasGod: boolean
+): boolean {
+  if (!manual.enabled) return false;
+  const roles = Object.values(manual.byIndex);
+  const count = (r: Role) => roles.filter((x) => x === r).length;
+  if (mode === 'imposter') {
+    return count('imposter') === imposterCount && roles.length === imposterCount;
+  }
+  return (
+    count('mafia') === mafiaCount &&
+    count('doctor') === (hasDoctor ? 1 : 0) &&
+    count('god') === (hasGod ? 1 : 0)
+  );
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -61,6 +127,8 @@ interface BuildArgs {
   hasDoctor: boolean;
   hasGod: boolean;
   override: CustomOverride;
+  manual: ManualRoles;
+  history: Record<string, number>;
   excludeIds?: number[];
 }
 
@@ -73,6 +141,8 @@ function buildRound({
   hasDoctor,
   hasGod,
   override,
+  manual,
+  history,
   excludeIds = []
 }: BuildArgs): Round {
   let category = '';
@@ -89,26 +159,33 @@ function buildRound({
   }
 
   const allIndices = names.map((_, i) => i);
-  const filtered = allIndices.filter((i) => !excludeIds.includes(i));
-  const usable = filtered.length >= 1 ? filtered : allIndices;
-  const shuffledIdx = shuffle(usable);
-
+  const baseRole: Role = mode === 'imposter' ? 'crew' : 'villager';
   const roleByIdx = new Map<number, Role>();
-  if (mode === 'imposter') {
-    const imposters = shuffledIdx.slice(0, imposterCount);
-    for (const i of imposters) roleByIdx.set(i, 'imposter');
-    for (const i of allIndices) if (!roleByIdx.has(i)) roleByIdx.set(i, 'crew');
+
+  if (manualComplete(mode, manual, imposterCount, mafiaCount, hasDoctor, hasGod)) {
+    for (const [idx, role] of Object.entries(manual.byIndex)) {
+      roleByIdx.set(Number(idx), role);
+    }
+    for (const i of allIndices) if (!roleByIdx.has(i)) roleByIdx.set(i, baseRole);
   } else {
-    let cursor = 0;
-    const take = (n: number, role: Role) => {
-      const slice = shuffledIdx.slice(cursor, cursor + n);
-      for (const i of slice) roleByIdx.set(i, role);
-      cursor += n;
-    };
-    take(mafiaCount, 'mafia');
-    if (hasDoctor) take(1, 'doctor');
-    if (hasGod) take(1, 'god');
-    for (const i of allIndices) if (!roleByIdx.has(i)) roleByIdx.set(i, 'villager');
+    const villainCount = mode === 'imposter' ? imposterCount : mafiaCount;
+    const hasEnough = allIndices.length - excludeIds.length >= villainCount;
+    const villainCandidates = hasEnough
+      ? allIndices.filter((i) => !excludeIds.includes(i))
+      : allIndices;
+    const villains = chooseVillains(villainCandidates, villainCount, names, history);
+    const villainRole: Role = mode === 'imposter' ? 'imposter' : 'mafia';
+    for (const i of villains) roleByIdx.set(i, villainRole);
+
+    if (mode === 'imposter') {
+      for (const i of allIndices) if (!roleByIdx.has(i)) roleByIdx.set(i, 'crew');
+    } else {
+      const remaining = shuffle(allIndices.filter((i) => !roleByIdx.has(i)));
+      let cursor = 0;
+      if (hasDoctor && cursor < remaining.length) roleByIdx.set(remaining[cursor++], 'doctor');
+      if (hasGod && cursor < remaining.length) roleByIdx.set(remaining[cursor++], 'god');
+      for (const i of allIndices) if (!roleByIdx.has(i)) roleByIdx.set(i, 'villager');
+    }
   }
 
   const players: Player[] = names.map((name, i) => ({
@@ -154,13 +231,16 @@ interface GameStore extends GameState {
   setCustomWord: (word: string) => void;
   randomizeCustomWord: () => void;
 
+  toggleManualRoles: () => void;
+  setManualRole: (index: number, role: Role | null) => void;
+
   startRound: () => void;
   markHostBriefed: () => void;
   beginHandoff: () => void;
   markRevealed: (playerId: number) => void;
   advanceReveal: () => void;
   endRound: () => void;
-  newRoundSamePlayers: () => void;
+  nextRoundSetup: () => void;
   reset: () => void;
 }
 
@@ -230,7 +310,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (playerNames.length >= 12) return;
     set({
       playerNames: [...playerNames, ''],
-      playerSeeds: [...playerSeeds, randomSeed()]
+      playerSeeds: [...playerSeeds, randomSeed()],
+      manualRoles: { enabled: false, byIndex: {} }
     });
   },
 
@@ -245,6 +326,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       playerNames: names,
       playerSeeds: seeds,
       imposterCount: Math.min(state.imposterCount, maxImp),
+      manualRoles: { enabled: false, byIndex: {} },
       lastImposterIds: []
     });
   },
@@ -274,6 +356,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
+  toggleManualRoles: () => {
+    const manual = get().manualRoles;
+    set({ manualRoles: { enabled: !manual.enabled, byIndex: {} } });
+  },
+
+  setManualRole: (index, role) => {
+    const byIndex = { ...get().manualRoles.byIndex };
+    if (role === null) {
+      delete byIndex[index];
+    } else {
+      byIndex[index] = role;
+    }
+    set({ manualRoles: { enabled: true, byIndex } });
+  },
+
   startRound: () => {
     const state = get();
     if (!state.gameMode) return;
@@ -286,8 +383,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
       hasDoctor: state.hasDoctor,
       hasGod: state.hasGod,
       override: state.customOverride,
+      manual: state.manualRoles,
+      history: state.imposterHistory,
       excludeIds: state.lastImposterIds
     });
+    const villainRole = state.gameMode === 'imposter' ? 'imposter' : 'mafia';
+    const villains = round.players.filter((p) => p.role === villainRole);
+    const history = { ...state.imposterHistory };
+    for (const v of villains) {
+      const key = nameKey(v.name);
+      history[key] = (history[key] ?? 0) + 1;
+    }
+    saveHistory(history);
     const consumed =
       state.gameMode === 'imposter' &&
       state.customOverride.enabled &&
@@ -296,10 +403,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({
       phase: 'briefing',
       round,
-      lastImposterIds:
-        state.gameMode === 'imposter'
-          ? round.players.filter((p) => p.role === 'imposter').map((p) => p.id)
-          : [],
+      imposterHistory: history,
+      lastImposterIds: villains.map((p) => p.id),
       customOverride: consumed
         ? { ...state.customOverride, word: '', category: '' }
         : state.customOverride
@@ -331,37 +436,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   endRound: () => set({ phase: 'end' }),
 
-  newRoundSamePlayers: () => {
-    const state = get();
-    if (!state.gameMode) return;
-    const round = buildRound({
-      mode: state.gameMode,
-      names: state.playerNames,
-      seeds: state.playerSeeds,
-      imposterCount: state.imposterCount,
-      mafiaCount: state.mafiaCount,
-      hasDoctor: state.hasDoctor,
-      hasGod: state.hasGod,
-      override: state.customOverride,
-      excludeIds: state.lastImposterIds
-    });
-    const consumed =
-      state.gameMode === 'imposter' &&
-      state.customOverride.enabled &&
-      state.customOverride.word.trim().length > 0 &&
-      state.customOverride.category.trim().length > 0;
-    set({
-      phase: 'briefing',
-      round,
-      lastImposterIds:
-        state.gameMode === 'imposter'
-          ? round.players.filter((p) => p.role === 'imposter').map((p) => p.id)
-          : [],
-      customOverride: consumed
-        ? { ...state.customOverride, word: '', category: '' }
-        : state.customOverride
-    });
-  },
+  nextRoundSetup: () => set({ phase: 'players-setup', round: null }),
 
   reset: () => set(makeInitialState())
 }));

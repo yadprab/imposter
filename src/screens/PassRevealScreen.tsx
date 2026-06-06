@@ -9,7 +9,6 @@ import {
 import { useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { CandyButton } from '../components/CandyButton';
-import { VillainMask } from '../components/icons';
 import { ScratchCard } from '../components/ScratchCard';
 import { useGameStore } from '../game/store';
 import type { Role } from '../game/types';
@@ -17,11 +16,11 @@ import type { Role } from '../game/types';
 type Stage = 'pass' | 'reveal';
 
 const ROLE_CARD_CLASS: Record<Role, string> = {
-  imposter: 'imposter-villain',
+  imposter: 'crew-card',
   crew: 'crew-card',
-  mafia: 'mafia-card',
-  doctor: 'doctor-card',
-  god: 'god-card',
+  mafia: 'villager-card',
+  doctor: 'villager-card',
+  god: 'villager-card',
   villager: 'villager-card'
 };
 
@@ -143,8 +142,8 @@ function RoleContent({ role, category, word, currentPlayerId, mafiaPlayers }: Co
   if (role === 'imposter') {
     return (
       <Stack gap="xs" align="center">
-        <div className="villain-mask"><VillainMask size={64} /></div>
-        <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.3em', color: '#ffb3c1' }}>
+        <img src="/imposter-fox.png" alt="imposter" className="role-art" width={150} height={150} />
+        <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.3em', color: 'rgba(255,255,255,0.95)' }}>
           you are the
         </Text>
         <Title className="imposter-text" style={{ fontSize: 48, lineHeight: 1 }} ta="center">
@@ -178,8 +177,8 @@ function RoleContent({ role, category, word, currentPlayerId, mafiaPlayers }: Co
     const teammates = mafiaPlayers.filter((p) => p.id !== currentPlayerId);
     return (
       <Stack gap="xs" align="center">
-        <div className="villain-mask"><VillainMask size={56} /></div>
-        <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.3em', color: '#ffb3c1' }}>
+        <img src="/mafia-boss.png" alt="mafia" className="role-art" width={140} height={140} />
+        <Text size="xs" tt="uppercase" fw={800} style={{ letterSpacing: '0.3em', color: 'rgba(255,255,255,0.95)' }}>
           you are the
         </Text>
         <Title className="imposter-text" style={{ fontSize: 44, lineHeight: 1 }} ta="center">

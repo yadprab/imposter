@@ -13,7 +13,15 @@ import {
 import { useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { CandyButton, CandyIconButton } from '../components/CandyButton';
-import { useGameStore } from '../game/store';
+import { manualComplete, useGameStore } from '../game/store';
+import type { Role } from '../game/types';
+
+const MANUAL_ROLE_LABEL: Record<string, string> = {
+  base: 'Villager',
+  mafia: 'Mafia',
+  doctor: 'Doctor',
+  god: 'God'
+};
 
 export function PlayersSetupScreen() {
   const gameMode = useGameStore((s) => s.gameMode);
@@ -26,6 +34,7 @@ export function PlayersSetupScreen() {
   const hasDoctor = useGameStore((s) => s.hasDoctor);
   const hasGod = useGameStore((s) => s.hasGod);
   const customOverride = useGameStore((s) => s.customOverride);
+  const manualRoles = useGameStore((s) => s.manualRoles);
 
   const setPlayerName = useGameStore((s) => s.setPlayerName);
   const addPlayer = useGameStore((s) => s.addPlayer);
@@ -39,6 +48,8 @@ export function PlayersSetupScreen() {
   const setCustomCategory = useGameStore((s) => s.setCustomCategory);
   const setCustomWord = useGameStore((s) => s.setCustomWord);
   const randomizeCustomWord = useGameStore((s) => s.randomizeCustomWord);
+  const toggleManualRoles = useGameStore((s) => s.toggleManualRoles);
+  const setManualRole = useGameStore((s) => s.setManualRole);
   const startRound = useGameStore((s) => s.startRound);
   const backToHost = useGameStore((s) => s.backToHost);
 
@@ -52,8 +63,37 @@ export function PlayersSetupScreen() {
     gameMode !== 'imposter' ||
     !customOverride.enabled ||
     (customOverride.category.trim().length > 0 && customOverride.word.trim().length > 0);
-  const canStart = playerCount >= 3 && namesFilled && customOk;
+  const mode = gameMode === 'mafia' ? 'mafia' : 'imposter';
+  const manualOk =
+    !manualRoles.enabled ||
+    manualComplete(mode, manualRoles, imposterCount, mafiaCount, hasDoctor, hasGod);
+  const canStart = playerCount >= 3 && namesFilled && customOk && manualOk;
   const gameLabel = gameMode === 'mafia' ? 'MAFIA' : 'IMPOSTER';
+
+  const manualImposterCount = Object.values(manualRoles.byIndex).filter(
+    (r) => r === 'imposter'
+  ).length;
+  const mafiaCycle: (Role | null)[] = [
+    null,
+    'mafia',
+    ...(hasDoctor ? (['doctor'] as Role[]) : []),
+    ...(hasGod ? (['god'] as Role[]) : [])
+  ];
+
+  function toggleImposterPick(index: number) {
+    if (manualRoles.byIndex[index] === 'imposter') {
+      setManualRole(index, null);
+    } else if (manualImposterCount < imposterCount) {
+      setManualRole(index, 'imposter');
+    }
+  }
+
+  function cycleMafiaRole(index: number) {
+    const current = manualRoles.byIndex[index] ?? null;
+    const at = mafiaCycle.indexOf(current);
+    const next = mafiaCycle[(at + 1) % mafiaCycle.length];
+    setManualRole(index, next);
+  }
 
   return (
     <Stack gap="md" style={{ flex: 1 }}>
@@ -147,6 +187,45 @@ export function PlayersSetupScreen() {
         </div>
       )}
 
+      {gameMode === 'imposter' && (
+        <div className="candy-card">
+          <Stack gap="sm">
+            <Group justify="space-between" align="center">
+              <Stack gap={0}>
+                <Text fw={700} c="white" size="lg">Pick imposters myself</Text>
+                <Text size="xs" c="white" style={{ opacity: 0.7 }}>
+                  {manualRoles.enabled ? `${manualImposterCount} / ${imposterCount} chosen` : 'Off — random draw'}
+                </Text>
+              </Stack>
+              <Switch
+                checked={manualRoles.enabled}
+                onChange={toggleManualRoles}
+                color="pink"
+                size="md"
+              />
+            </Group>
+            {manualRoles.enabled && (
+              <Group gap="xs" wrap="wrap">
+                {playerNames.map((name, i) => {
+                  const picked = manualRoles.byIndex[i] === 'imposter';
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      className={picked ? 'role-pick role-pick--on' : 'role-pick'}
+                      onClick={() => toggleImposterPick(i)}
+                    >
+                      <Avatar seed={playerSeeds[i]} size={24} />
+                      <span>{name.trim() || `Player ${i + 1}`}</span>
+                    </button>
+                  );
+                })}
+              </Group>
+            )}
+          </Stack>
+        </div>
+      )}
+
       {gameMode === 'mafia' && (
         <div className="candy-card">
           <Stack gap="md">
@@ -187,6 +266,54 @@ export function PlayersSetupScreen() {
                 size="md"
               />
             </Group>
+          </Stack>
+        </div>
+      )}
+
+      {gameMode === 'mafia' && (
+        <div className="candy-card">
+          <Stack gap="sm">
+            <Group justify="space-between" align="center">
+              <Stack gap={0}>
+                <Text fw={700} c="white" size="lg">Assign roles myself</Text>
+                <Text size="xs" c="white" style={{ opacity: 0.7 }}>
+                  {manualRoles.enabled ? 'Tap a player to change role' : 'Off — random draw'}
+                </Text>
+              </Stack>
+              <Switch
+                checked={manualRoles.enabled}
+                onChange={toggleManualRoles}
+                color="pink"
+                size="md"
+              />
+            </Group>
+            {manualRoles.enabled && (
+              <Stack gap="xs">
+                <Text size="xs" c="white" style={{ opacity: 0.85 }}>
+                  Mafia {Object.values(manualRoles.byIndex).filter((r) => r === 'mafia').length}/{mafiaCount}
+                  {hasDoctor && ` · Doctor ${Object.values(manualRoles.byIndex).filter((r) => r === 'doctor').length}/1`}
+                  {hasGod && ` · God ${Object.values(manualRoles.byIndex).filter((r) => r === 'god').length}/1`}
+                </Text>
+                <Group gap="xs" wrap="wrap">
+                  {playerNames.map((name, i) => {
+                    const role = manualRoles.byIndex[i] ?? null;
+                    const key = role ?? 'base';
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        className={role ? 'role-pick role-pick--on' : 'role-pick'}
+                        onClick={() => cycleMafiaRole(i)}
+                      >
+                        <Avatar seed={playerSeeds[i]} size={24} />
+                        <span>{name.trim() || `Player ${i + 1}`}</span>
+                        <span className="role-pick-tag">{MANUAL_ROLE_LABEL[key]}</span>
+                      </button>
+                    );
+                  })}
+                </Group>
+              </Stack>
+            )}
           </Stack>
         </div>
       )}
@@ -270,7 +397,11 @@ export function PlayersSetupScreen() {
             ? 'Need at least 3 players'
             : !namesFilled
               ? 'Fill in all player names'
-              : 'Custom word needs both category and word'}
+              : !manualOk
+                ? gameMode === 'imposter'
+                  ? `Pick exactly ${imposterCount} imposter${imposterCount > 1 ? 's' : ''}`
+                  : 'Assign the exact mafia / doctor / god counts'
+                : 'Custom word needs both category and word'}
         </Text>
       )}
     </Stack>
